@@ -60,8 +60,7 @@ willmott_index_agreement <- function(values, fitted_values) {
   e1 <- legate_mccabe(values, fitted_values)
   if (e1 < 0) {
     return(100 * ((sum(abs(mean_deviation(values))) / sum(absolute_error(values, fitted_values))) - 1))
-  }
-  else {
+  } else {
     return(e1)
   }
 }
@@ -69,3 +68,4 @@ willmott_index_agreement <- function(values, fitted_values) {
 pearson_product_moment_r <- function(values, fitted_values) {
   sum(mean_deviation(values) * mean_deviation(fitted_values)) / sqrt(sum((mean_deviation(values)^2) * (mean_deviation(fitted_values)^2)))
 }
+
