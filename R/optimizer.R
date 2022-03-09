@@ -7,7 +7,7 @@ DeOptimizer <- R6::R6Class("DeOptimizer", list(
     self$fitness_fun <- fitness_fun
   },
 
-  optimize = function(model){
+  optimize = function(model) {
     fit_fun <- self$fitness_fun(model)
 
     fit <- GA::de(type = "real-valued",
@@ -20,7 +20,7 @@ DeOptimizer <- R6::R6Class("DeOptimizer", list(
                   optim   = FALSE,
                   maxiter = 100)
 
-    solution <- fit@solution[1,]
+    solution <- fit@solution[1, ]
     names(solution) <- model$parameters
     return(solution)
 
@@ -38,7 +38,7 @@ NelderMeadOptimizer <- R6::R6Class("NelderMeadOptimizer", list(
     self$fitness_fun <- fitness_fun
   },
 
-  optimize = function(model){
+  optimize = function(model) {
     fit_fun <- self$fitness_fun(model)
 
     fit <- optim(as.numeric(model$start),
@@ -54,7 +54,7 @@ NelderMeadOptimizer <- R6::R6Class("NelderMeadOptimizer", list(
                   optim   = FALSE,
                   maxiter = 100)
 
-    solution <- fit@solution[1,]
+    solution <- fit@solution[1, ]
     names(solution) <- model$parameters
     return(solution)
 
@@ -62,9 +62,3 @@ NelderMeadOptimizer <- R6::R6Class("NelderMeadOptimizer", list(
   }
 )
 )
-
-
-
-
-
-
