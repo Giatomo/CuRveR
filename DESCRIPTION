@@ -29,7 +29,9 @@ Imports:
     forcats,
     shiny,
     sf,
-    tibble
+    tibble,
+    gtools,
+    shinyFiles
 LazyData: true
 RoxygenNote: 7.1.2
 Remotes: github::coolbutuseless/ggpattern

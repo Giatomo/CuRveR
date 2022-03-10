@@ -68,4 +68,3 @@ willmott_index_agreement <- function(values, fitted_values) {
 pearson_product_moment_r <- function(values, fitted_values) {
   sum(mean_deviation(values) * mean_deviation(fitted_values)) / sqrt(sum((mean_deviation(values)^2) * (mean_deviation(fitted_values)^2)))
 }
-
