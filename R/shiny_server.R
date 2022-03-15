@@ -137,7 +137,7 @@ shiny_server <- function(input, output, session) {
         sheet_n <- paste0("sheet_", x)
         name_n <- paste0("signal_", x)
 
-        if (is_excel_file(fs::path((input[[file_n]]))) {
+        if (is_excel_file(fs::path(input[[file_n]]))) {
           readxl::read_xlsx(
             path = fs::path(input[[file_n]]),
             sheet = input[[sheet_n]]
