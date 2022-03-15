@@ -97,7 +97,7 @@ shiny_server <- function(input, output, session) {
   output$signals <- renderUI({
     req(!is.integer(input$files))
 
-    files <- shinyFiles::parseFilePaths(c("Home" = "~/"), input$files)
+    files <- shinyFiles::parseFilePaths(volumes, input$files)
 
 
     paths <- files$datapath
@@ -106,7 +106,7 @@ shiny_server <- function(input, output, session) {
     print(paths)
     purrr::map(
       1:input$n_signals,
-      \(x){
+      \(x) {
         file_n <- paste0("file_", x)
         sheet_n <- paste0("sheet_", x)
         name_n <- paste0("signal_", x)
