@@ -31,7 +31,8 @@ Imports:
     sf,
     tibble,
     gtools,
-    shinyFiles
+    shinyFiles,
+    readr
 LazyData: true
 RoxygenNote: 7.1.2
 Remotes: github::coolbutuseless/ggpattern

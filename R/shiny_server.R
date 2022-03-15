@@ -10,6 +10,7 @@
 #' @import svglite
 #' @import shiny
 #' @import gtools
+#' @import readr
 
 #' @include server_utils.R
 #' @include models.R
@@ -136,14 +137,14 @@ shiny_server <- function(input, output, session) {
         sheet_n <- paste0("sheet_", x)
         name_n <- paste0("signal_", x)
 
-        if (is_excel_file(input[[file_n]])) {
+        if (is_excel_file(fs::path((input[[file_n]]))) {
           readxl::read_xlsx(
-            path = input[[file_n]],
+            path = fs::path(input[[file_n]]),
             sheet = input[[sheet_n]]
           ) |> mutate(signal = input[[name_n]])
         } else {
           read_csv(
-            file = input[[file_n]],
+            file = fs::path(input[[file_n]]),
             col_names = TRUE
           ) |> mutate(signal = input[[name_n]])
         }
