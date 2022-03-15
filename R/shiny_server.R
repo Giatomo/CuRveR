@@ -122,7 +122,7 @@ shiny_server <- function(input, output, session) {
 
 
   observeEvent(input$load_data, {
-    files <- shinyFiles::parseFilePaths(c("Home" = "~/"), input$files)
+    files <- shinyFiles::parseFilePaths(volumes, input$files)
 
 
     paths <- files$datapath
