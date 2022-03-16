@@ -72,7 +72,9 @@ RichardModel <- R6::R6Class("RichardModel",
       self$x <- x
       self$y <- y
 
-      num_diff <- finite_diff_5pt_cent(x, y)
+
+      tibble(x = x, y = y) |> group_by(y) |> summarise(x = median(x)) -> data
+      num_diff <- finite_diff_5pt_cent(data$x, data$y)
       threshold_percent <- 0.10
 
       # Estimate starting value for the optimizer
@@ -99,6 +101,7 @@ RichardModel <- R6::R6Class("RichardModel",
         r_max = max(0, self$start$r_max * 100),
         s     = max(x)
       )
+
     }
   )
 )

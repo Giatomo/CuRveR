@@ -59,7 +59,7 @@ fit_data <- function(.data, .groups, .value, .time) {
       {{ .value }} := {{ .value }}
     ) |>
     rowwise() |>
-    mutate(model = list(RichardModel$new({{ .value }}, {{ .time }}))) |>
+    mutate(model = list(RichardModel$new({{ .time  }}, {{ .value }}))) |>
     group_walk(\(x, y){
       x$model[[1]]$optimize(optimizer)
     })

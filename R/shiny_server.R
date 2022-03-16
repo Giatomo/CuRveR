@@ -154,6 +154,8 @@ shiny_server <- function(input, output, session) {
 
     # Tidy loaded data
 
+    rvs$columns <<- colnames(rvs$data)
+
     rvs$data |>
       select(-matches(regex("T°"))) |>
       clean_time(Time) |>
@@ -168,11 +170,92 @@ shiny_server <- function(input, output, session) {
 
 
     rvs$entities <<- gtools::mixedsort(unique(rvs$data[["well"]]))
+    
     rvs$all_signals <<- unique(rvs$data[["signal"]])
 
 
     updateNavbarPage(session, "current_tab", selected = "2")
   })
+
+
+#######################
+  columnsUI <- reactive({
+      variables_rank_list(
+        id = "columns",
+        group = "ColumnsSorter",
+        text = "Columns",
+        labels = rvs$columns,
+        remove_dragged_elements = TRUE
+      )
+    })
+
+  xDataUI <- reactive({
+    variables_rank_list(
+      id = "xdata",
+      group = "ColumnsSorter",
+      text = "X Data",
+      labels = rvs$xdata,
+      put = htmlwidgets::JS("function (to) { return to.el.children.length < 1; }"),
+      remove_dragged_elements = TRUE
+    )
+  })
+
+  yDataUI <- reactive({
+    variables_rank_list(
+      id = "ydata",
+      group = "ColumnsSorter",
+      text = "Y Data(s)",
+      labels = rvs$ydata,
+      remove_dragged_elements = TRUE
+    )
+  })
+
+  infoDataUI <- reactive({
+    variables_rank_list(
+      id = "infodata",
+      group = "ColumnsSorter",
+      text = "Info Data",
+      labels = rvs$infodata,
+      remove_dragged_elements = TRUE
+    )
+  })
+
+  output$columns <- renderUI({
+    columnsUI()
+  })
+  output$xdata <- renderUI({
+    xDataUI()
+  })
+  output$ydata <- renderUI({
+    yDataUI()
+  })
+  output$infodata <- renderUI({
+    infoDataUI()
+  })
+
+
+
+  observeEvent(
+    {
+      input[["columns"]]
+      input[["xdata"]]
+      input[["ydata"]]
+      input[["infodata"]]
+
+    },
+    {
+      rvs$columns <- input[["columns"]]
+      rvs$xdata <- input[["xdata"]]
+      rvs$ydata <- input[["ydata"]]
+      rvs$infodata <- input[["infodata"]]
+
+      rvs$columns <- gtools::mixedsort(rvs$columns)
+      rvs$xdata <- gtools::mixedsort(rvs$xdata)
+      rvs$ydata <- gtools::mixedsort(rvs$ydata)
+      rvs$infodata <- gtools::mixedsort(rvs$infodata)
+    }
+  )
+#########################
 
   #################################################################
   ##                        Data overview                        ##
@@ -473,22 +556,20 @@ shiny_server <- function(input, output, session) {
     data_to_fit |>
       rowwise() |>
       filter(between(Time, left_cutoff, right_cutoff)) |>
-      fit_data(c(signal, well), value, Time) -> rvs$parameters_by_well
-
-    data_to_fit |>
-      rowwise() |>
-      filter(between(Time, left_cutoff, right_cutoff)) |>
       fit_data(c(signal, condition), value, Time) -> rvs$parameters_by_condition
 
-    rvs$parameters_by_well |>
-      mutate(fit = list(model$predict(Time))) -> rvs$data_by_well
+    rvs$parameters_by_condition |>
+      mutate(params = list(model$estimated)) |>
+      unnest_wider(params) -> rvs$parameters
+
+    print(rvs$parameters)
 
     rvs$parameters_by_condition |>
-      mutate(fit = list(model$predict(Time))) -> rvs$data_by_condition
-
-    rvs$data_by_condition |>
-      rowwise() |>
+      mutate(params = list(model$estimated)) |>
+      unnest_wider(params) |>
+      mutate(fit = list(model$predict(Time)))  |>
       select(-model) |>
+      rowwise() |>
       mutate(
         Time = c(Time),
         value = c(value),
@@ -496,14 +577,24 @@ shiny_server <- function(input, output, session) {
       ) |>
       unnest(c(signal, condition, Time, value, fit)) -> rvs$data_by_condition
 
-    rvs$data_by_condition |>
+    rvs$parameters_by_condition |>
+      mutate(params = list(model$estimated)) |>
+      unnest_wider(params)  |>
+      select(-model) -> rvs$parameters
+
+    rvs$parameters_by_condition |>
+      mutate(fit = list(model$predict(Time)))  |>
+      rowwise() |>
+      mutate(
+        Time = c(Time),
+        value = c(value),
+        fit = c(fit)) |>
+      select(-model) |>
+      unnest(c(signal, condition, Time, value, fit)) |>
       group_by(signal, condition) |>
       summarise(
         VEcv = variance_explained(value, fit),
-        d_r = willmott_index_agreement(value, fit)
-      ) -> rvs$perfomances
-
-    print(rvs$perfomances)
+        d_r = willmott_index_agreement(value, fit)) -> rvs$perfomances
 
 
     rvs$all_conditions <- unique(rvs$data_by_condition[["condition"]])
@@ -513,7 +604,7 @@ shiny_server <- function(input, output, session) {
         rvs$perfomances,
         list(
           VEcv = color_tile_from_0("lightpink", "lightblue"),
-          d_r = color_tile_from_0("lightpink", "lightblue")
+          d_r  = color_tile_from_0("lightpink", "lightblue")
         )
       )
     })
@@ -523,7 +614,7 @@ shiny_server <- function(input, output, session) {
     })
 
     output$data_recap <- formattable::renderFormattable({
-      formattable::formattable(rvs$recap)
+      formattable::formattable(rvs$parameters)
     })
   })
 
@@ -566,7 +657,11 @@ shiny_server <- function(input, output, session) {
   })
 
   final_plot <- reactive({
+
     req(rvs$data_by_condition)
+
+
+    print(rvs$data_by_condition)
 
     rvs$data_by_condition |>
       filter(signal == input$selected_signal_plot) |>
@@ -594,6 +689,9 @@ shiny_server <- function(input, output, session) {
         ggplot(aes(x = Time, y = value, group = well)) -> p
 
 
+      for (metrics in input$metric_to_visualize) {
+
+      }
       if ("data_point" %in% input$metric_to_visualize) {
         p <- p + geom_point(aes(x = Time, y = value, group = well), alpha = .4, color = "#7570b3")
       }

@@ -57,6 +57,30 @@ shiny_UI <- navbarPage(
     )
   ),
 
+
+
+  tabPanel("Format Data",
+  value = 10,
+    fluidRow(
+        column(
+          3,
+          div(style = "width:100%;overflow-x: scroll;height:50vh;overflow-y: scroll;", uiOutput("columns"))
+        ),
+        column(
+          3,
+          div(style = "width:100%;overflow-x: scroll;height:50vh;overflow-y: scroll;", uiOutput("xdata"))
+        ),
+        column(
+          3,
+          div(style = "width:100%;overflow-x: scroll;height:50vh;overflow-y: scroll;", uiOutput("ydata"))
+        ),
+        column(
+          3,
+          div(style = "width:100%;overflow-x: scroll;height:50vh;overflow-y: scroll;", uiOutput("infodata"))
+        ),
+      )
+  ),
+
   #################################################################
   ##                        Data overview                        ##
   #################################################################
