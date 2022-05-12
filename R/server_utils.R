@@ -1,7 +1,15 @@
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
+`%!in%` <- Negate(`%in%`)
+
+increment_trigger <- function(trigger) {
+    ifelse(is.null(trigger), 0, trigger) + 1
+    }
+
 modalSavePlot <- function() {
   modalDialog(
+    easyClose = TRUE,
+    fade = FALSE,
     title = "Save",
     textInput("filename", "Filename"),
     selectInput("filetype", "Filetype", choices = c("eps", "ps", "pdf", "jpeg", "tiff", "png", "bmp", "svg")),
@@ -15,10 +23,32 @@ modalSavePlot <- function() {
 
 modalSaveData <- function() {
   modalDialog(
+    easyClose = TRUE,
+    fade = FALSE,
     title = "Save",
     textInput("filename", "Filename"),
     selectInput("filetype", "Filetype", choices = c("csv")),
     downloadButton("downloadData", "Download"),
+  )
+}
+
+
+namingModal <- function(id, condition_exist = FALSE) { # nolint
+  ns <- NS(id)
+
+  modalDialog(
+    easyClose = TRUE,
+    fade = FALSE,
+    textInput(ns("name"), "Enter condition name",
+      placeholder = 'Try "WT" or "Treatment_X"'
+    ),
+    if(condition_exist) {
+      div(tags$b("Condition already exist", style = "color: red;"))
+    },
+    footer = tagList(
+      modalButton("Cancel"),
+      actionButton(ns("ok"), "OK")
+    )
   )
 }
 
@@ -83,6 +113,17 @@ color_tile_from_0 <- function(...) {
   })
 }
 
+color_tile_0_to_100 <- function(...) {
+  formattable::formatter("span", style = \(x) {
+    formattable::style(
+      display = "block",
+      padding = "0 4px",
+      `border-radius` = "4px",
+      `background-color` = formattable::csscolor(formattable::gradient(c(0, as.numeric(x), 100), ...))[2:length(x)-1]
+    )
+  })
+}
+
 
 
 
@@ -109,118 +150,38 @@ download_object_as_yaml <- function(object, file_path = tempfile(pattern = "temp
 }
 
 
-
-namingModal <- function(id, condition_exist = FALSE) { # nolint
-  ns <- NS(id)
-
-  modalDialog(
-    textInput(ns("name"), "Enter condition name",
-      placeholder = 'Try "WT" or "Treatment_X"'
-    ),
-    if (condition_exist) {
-      div(tags$b("Condition already exist", style = "color: red;"))
-    },
-    footer = tagList(
-      modalButton("Cancel"),
-      actionButton(ns("ok"), "OK")
-    )
-  )
-}
-
-conditionManagerUI <- function(id, choices, selected = NULL) {
-  # `NS(id)` returns a namespace function, which was save as `ns` and will
-  # invoke later.
-  ns <- NS(id)
-
-  tagList(
-    fillRow(
-      flex = c(NA, NA, NA, NA, NA, NA),
-      selectizeInput(ns("selected_condition"), label = NULL, choices = choices, selected = selected),
-      actionButton(ns("create"), NULL, icon = icon("plus")),
-      actionButton(ns("remove"), NULL, icon = icon("trash-alt")),
-      actionButton(ns("rename"), NULL, icon = icon("edit")),
-      shinyFiles::shinyFilesButton(ns("import"), label = NULL, title = "Please select a file", multiple = FALSE, icon = icon("file-import"), style = "margin-left:5px"),
-      shinyFiles::shinySaveButton(ns("save"), label = NULL, title = "Save file as...", icon = icon("save"))
-    )
-  )
-}
-
-conditionManagerServer <- function(id, conditions) {
-  moduleServer(
-    id,
-    function(input, output, session) {
-      toReturn <- reactiveValues(
-        conditions = isolate(conditions),
-        trigger = NULL,
-        selected = isolate(input$selected_condition)
+input_file_row <- function(input, file_input_id, sheet_input_id, name_input_id, file_choices) {
+  fluidRow(
+    column(
+      4,
+      shiny::selectInput(
+        inputId = file_input_id,
+        label = NULL,
+        choices = file_choices,
+        selected = input[[file_input_id]] %||% NULL
       )
-
-      action <- reactiveVal("")
-      volumes <- c(Home = fs::path_home(), shinyFiles::getVolumes()())
-
-      observeEvent(input$import, {
-        shinyFiles::shinyFileChoose(input, "import", roots = volumes, session = session, filetypes = c("yaml"))
-        if (is.integer(input$import)) {
-          return(toReturn)
-        } else {
-          yaml <- shinyFiles::parseFilePaths(volumes, input$import)
-          toReturn$conditions <- yaml::read_yaml(yaml$datapath)
-          toReturn$selected <- names(toReturn$conditions)[1]
-          toReturn$trigger <- ifelse(is.null(toReturn$trigger), 0, toReturn$trigger) + 1
-          return(toReturn)
-        }
-      })
-
-      observeEvent(input$save, {
-        if (!save_file(to_save = toReturn$conditions, filetype = "yaml", input = input$save, session = session, roots = volumes)) {
-          return(toReturn)
-        }
-
-        toReturn$trigger <- ifelse(is.null(toReturn$trigger), 0, toReturn$trigger) + 1
-        return(toReturn)
-      })
-
-      observeEvent(input$remove, {
-        # ADD CONFIRMATION ?
-        toReturn$conditions[[input$selected_condition]] <- NULL
-        toReturn$selected <- names(toReturn$conditions)[length(toReturn$conditions)]
-        toReturn$trigger <- ifelse(is.null(toReturn$trigger), 0, toReturn$trigger) + 1
-        return(toReturn)
-      })
-
-      observeEvent(input$create, {
-        action("create")
-        showModal(namingModal(id))
-      })
-
-      observeEvent(input$rename, {
-        action("rename")
-        showModal(namingModal(id))
-      })
-
-      # In modal
-      observeEvent(input$ok, {
-        if (input$name %in% names(toReturn$conditions)) {
-          showModal(namingModal(id, condition_exist = TRUE))
-        } else {
-          if (action() == "create") {
-            toReturn$conditions[[input$name]] <- list(replicates = list(), blanks = list())
-          } else if (action() == "rename") {
-            toReturn$conditions[[input$name]] <- toReturn$conditions[[input$selected_condition]]
-            toReturn$conditions[[input$selected_condition]] <- NULL
-          }
-          removeModal()
-        }
-        toReturn$selected <- input$name
-        toReturn$trigger <- ifelse(is.null(toReturn$trigger), 0, toReturn$trigger) + 1
-      })
-
-      observeEvent(input$selected_condition, {
-        toReturn$selected <- input$selected_condition
-        toReturn$trigger <- ifelse(is.null(toReturn$trigger), 0, toReturn$trigger) + 1
-      })
-      return(toReturn)
-    }
+    ),
+    if (is_excel_file(input[[file_input_id]])) {
+      column(
+        4,
+        shiny::selectInput(
+          inputId = sheet_input_id,
+          label = NULL,
+          choices = readxl::excel_sheets(input[[file_input_id]]),
+          selected = input[[sheet_input_id]] %||% NULL
+        )
+      )
+    } else {
+      column(4)
+    },
+    column(
+      4,
+      textInput(
+        inputId = name_input_id,
+        label = NULL,
+        value = input[[name_input_id]] %||% ""
+      )
+    )
   )
 }
 
@@ -254,3 +215,42 @@ variables_rank_list <- function(id, group, text, labels, data, group_attribute, 
     )
   )
 }
+
+
+
+#  observeEvent({
+#       input$cutoff_brush
+#       input$same_cutoff
+#     }, {
+#       cutoff_selection <- function (df, signal, well, cutoff, same_cutoff = FALSE)
+
+#       if (same_cutoff == TRUE) {
+#         isolate({
+#           rvs$data |>
+#             rowwise() |>
+#             mutate(
+#               left_cutoff =  input$cutoff_brush[["xmin"]] %||% rvs$last_left_cutoff %||% left_cutoff,
+#               right_cutoff = input$cutoff_brush[["xmax"]] %||% rvs$last_right_cutoff %||% right_cutoff
+#             ) |>
+#             ungroup() -> rvs$data
+#         })
+#       } else {
+#         req(input$cutoff_brush)
+
+#         isolate({
+#           rvs$data |>
+#             rowwise() |>
+#             mutate(
+#               left_cutoff =  if_else(well == input$selected_well_cutoff && signal == input$selected_signal_cutoff, input$cutoff_brush[["xmin"]], left_cutoff),
+#               right_cutoff = if_else(well == input$selected_well_cutoff && signal == input$selected_signal_cutoff, input$cutoff_brush[["xmax"]], right_cutoff)
+#             ) |>
+#             ungroup() -> rvs$data
+#         })
+#       }
+
+#       req(input$cutoff_brush)
+
+#       rvs$last_left_cutoff <- input$cutoff_brush[["xmin"]]
+#       rvs$last_right_cutoff <- input$cutoff_brush[["xmax"]]
+#     }
+#   )

@@ -22,12 +22,19 @@ finite_diff_5pt_back <- function(x, y) {
 #' @return The dataframe with the formated time column as elapsed hours
 #' @export
 clean_time <- function(.data, .time_col) {
-  .data |>
+
+  # .data |>
+  #   mutate(
+  #     "{{ .time_col }}" := lubridate::as_datetime({{ .time_col }}),
+  #     "{{ .time_col }}" := {{ .time_col }} - first({{ .time_col }}),
+  #     "{{ .time_col }}" := as.numeric({{ .time_col }} / 3600)
+  #   )
+
+    .data |>
     mutate(
-      {{ .time_col }} := lubridate::as_datetime({{ .time_col }}),
-      {{ .time_col }} := {{ .time_col }} - first({{ .time_col }}),
-      {{ .time_col }} := as.numeric({{ .time_col }} / 3600)
-    )
+      across(.cols = {{.time_col}}, .fns = \(x) lubridate::as_datetime(x), .names = "{.col}"),
+      across(.cols = {{.time_col}}, .fns = \(x) x - first(x), .names = "{.col}"),
+      across(.cols = {{.time_col}}, .fns = \(x) as.numeric(x) / 3600, .names = "{.col}"))
 }
 
 #' Format into long format
@@ -45,11 +52,17 @@ format_wellplate_long <- function(.data, wells = matches(regex("^[A-Za-z]{1}\\d{
     drop_na(value)
 }
 
+is_excel_file <- function(file) {
+  if (is.null(file)) {
+    return(FALSE)
+  }
+  return(fs::path_ext(file) %in% c("xlsx", "xls"))
+}
 
 
 #' @export
-fit_data <- function(.data, .groups, .value, .time) {
-  optimizer <- DeOptimizer$new(least_absolute_deviation)
+fit_data <- function(.data, .groups, .value, .time, model = RichardModel, optimizer = DeOptimizer, loss_fun = least_absolute_deviation) {
+  optimizer <- optimizer$new(loss_fun)
 
   .data |>
     select({{ .groups }}, {{ .value }}, {{ .time }}) |>
@@ -59,18 +72,27 @@ fit_data <- function(.data, .groups, .value, .time) {
       {{ .value }} := {{ .value }}
     ) |>
     rowwise() |>
-    mutate(model = list(RichardModel$new({{ .time  }}, {{ .value }}))) |>
-    group_walk(\(x, y){
+    mutate(model = list(model$new({{ .time  }}, {{ .value }}))) |>
+    group_walk(\(x, y) {
       x$model[[1]]$optimize(optimizer)
     })
 }
 
-print_data <- function(.data) {
-  print(.data)
-  .data
+
+#' @export
+read_tabular_file <- function(filepath, signal_name, sheet = NULL) {
+  filepath <- fs::path(filepath)
+
+  df <- switch(fs::path_ext(filepath),
+    "xlsx" = readxl::read_xlsx(path = filepath, sheet = sheet),
+    "xls"  = readxl::read_xls(path = filepath, sheet = sheet),
+    "csv"  = readr::read_csv(file = filepath, col_names = TRUE),
+    "tsv"  = readr::read_tsv(file = filepath, col_names = TRUE),
+    readr::read_delim(file = filepath, col_names = TRUE)) |>
+      mutate(signal = signal_name)
+
+  return(df)
 }
-
-
 
 #' @export
 #' @title M_score

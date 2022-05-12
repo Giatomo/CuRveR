@@ -12,6 +12,12 @@
 
 #' @include hello.R
 
+
+models <- c("Richard", "Linear")
+optimizers <- c("Genetic algorithm")
+loss_functions <- c("LAD", "OLS")
+
+
 shiny_UI <- navbarPage(
   title = div(img(
     src = "Logo.svg",
@@ -19,6 +25,18 @@ shiny_UI <- navbarPage(
   )),
   windowTitle = "CuRveR",
   id = "current_tab",
+
+  tags$head(
+      tags$link(
+        rel = "stylesheet",
+        href = "https://cdn.jsdelivr.net/npm/katex@0.10.0-beta/dist/katex.min.css",
+        integrity = "sha384-9tPv11A+glH/on/wEu99NVwDPwkMQESOocs/ZGXPoIiLE8MU/qkqUcZ3zzL+6DuH",
+        crossorigin = "anonymous"),
+      tags$script(
+        src = "https://cdn.jsdelivr.net/npm/katex@0.10.0-beta/dist/katex.min.js",
+        integrity = "sha384-U8Vrjwb8fuHMt6ewaCy8uqeUXv4oitYACKdB0VziCerzt011iQ/0TqlSlv8MReCm",
+        crossorigin = "anonymous")
+    ),
 
   ##################################################################
   ##                            Footer                            ##
@@ -63,21 +81,20 @@ shiny_UI <- navbarPage(
   value = 10,
     fluidRow(
         column(
-          3,
+          4,
           div(style = "width:100%;overflow-x: scroll;height:50vh;overflow-y: scroll;", uiOutput("columns"))
         ),
         column(
-          3,
+          4,
           div(style = "width:100%;overflow-x: scroll;height:50vh;overflow-y: scroll;", uiOutput("xdata"))
         ),
         column(
-          3,
+          4,
           div(style = "width:100%;overflow-x: scroll;height:50vh;overflow-y: scroll;", uiOutput("ydata"))
-        ),
-        column(
-          3,
-          div(style = "width:100%;overflow-x: scroll;height:50vh;overflow-y: scroll;", uiOutput("infodata"))
-        ),
+        )
+      ),
+      fluidRow(
+        actionButton("format_data", "Format")
       )
   ),
 
@@ -178,25 +195,12 @@ shiny_UI <- navbarPage(
 
   tabPanel("Fit",
     value = 5,
-    fluidRow(
-      column(
-        4,
-        selectInput("optim_method", "Model method", choices = c("Richard"))
-      ),
-      column(
-        4,
-        selectInput("loss_fct", "Loss function", choices = c("LAD", "OLS"))
-      ),
-      column(
-        4,
-        selectInput("optim_method", "Optimization method", choices = c("GA"))
-      )
-    ),
-    fluidRow(
-      column(4,
-        offset = 4,
-        actionButton("fit", "Fit")
-      )
+    shiny::fillRow(
+      flex = c(NA, NA, NA, NA),
+      shiny::selectInput("optim_method", "Model method", choices = models),
+      shiny::selectInput("optim_method", "Optimization method", choices = optimizers),
+      shiny::selectInput("loss_fct", "Loss function", choices = loss_functions),
+      shiny::actionButton("fit", "Fit")
     ),
     fluidRow(
       column(

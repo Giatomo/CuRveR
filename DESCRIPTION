@@ -37,7 +37,9 @@ LazyData: true
 RoxygenNote: 7.1.2
 Remotes: github::coolbutuseless/ggpattern
 Collate:
+    'ConditionManager.r'
     'CuRveR.R'
+    'cutoffSelector.r'
     'evaluation.R'
     'fitness.R'
     'hello.R'

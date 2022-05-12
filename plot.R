@@ -20,39 +20,42 @@ plot_metrics_comparison <- function(df, condition,  metric, size = 5,  color = "
     }
 
 plot_metric_visualization <- function(df, x, metrics_to_visualize, group, wrap = NULL) {
-    ggplot(aes(x = x, group = group)) -> p
+    df |>
+        ggplot(aes(x = {{x}}, group = {{group}})) -> p
+
 
     for (metric in metrics_to_visualize) {
 
+
         if (metric %in% plot_points_metrics) {
-            p <- p + geom_point(aes(y = metric), alpha = .4, color = "#7570b3")
+            p <- p + geom_point(aes(y = .data[[metric]]), alpha = .4, color = "#7570b3")
             }
 
         if (metric %in% plot_hlines_metrics) {
-            p <- p + geom_hline(aes(yintercept = metric), linetype = "dashed", color = "#1B9E77")
+            p <- p + geom_hline(aes(yintercept = .data[[metric]]), linetype = "dashed", color = "#1B9E77")
             }
 
         if (metric %in% plot_vlines_metrics) {
-            p <- p + geom_vline(aes(xintercept = metric), linetype = "dashed", color = "#1B9E77")
+            p <- p + geom_vline(aes(xintercept = .data[[metric]]), linetype = "dashed", color = "#1B9E77")
             }
 
-        if (metric %in% plot_slopes_metrics) {
-            p <- p + geom_line(aes(y = linear(x, metric, intercept)), linetype = "dashed", color = "#1B9E77")
-            }
+        # if (metric %in% plot_slopes_metrics) {
+        #     p <- p + geom_line(aes(y = linear(x, metric, intercept)), linetype = "dashed", color = "#1B9E77")
+        #     }
 
         if (metric %in% plot_lines_metrics) {
-             p <- p + geom_line(aes(y = metric), color = "black")
+             p <- p + geom_line(aes(y = .data[[metric]]), color = "black")
              }
 
         }
 
-    p <- p +
-        scale_x_continuous(expand = c(0, 0)) +
-        scale_y_continuous(limits = c(0, NA), expand = c(0, 0)) +
-        theme_minimal()
+    # p <- p +
+    #     scale_x_continuous(expand = c(0, 0)) +
+    #     scale_y_continuous(limits = c(0, NA), expand = c(0, 0)) +
+    #     theme_minimal()
 
     if (!is.null(wrap)) {
-        p <- p + facet_wrap(~condition)
+        p <- p + facet_wrap(~well)
     }
 
     return(p)
@@ -60,7 +63,7 @@ plot_metric_visualization <- function(df, x, metrics_to_visualize, group, wrap =
 
 plot_metric_comparison <- function(df, x, metrics_to_visualize, color, fill, group) {
 
-    df |> 
+    df |>
         ggplot(aes(x = x, color = color, fill = fill)) -> p
 
     for (metric in metrics_to_visualize) {
@@ -91,3 +94,7 @@ plot_metric_comparison <- function(df, x, metrics_to_visualize, color, fill, gro
 
     return(p)
 }
+
+
+
+

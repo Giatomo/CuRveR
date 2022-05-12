@@ -102,6 +102,9 @@ RichardModel <- R6::R6Class("RichardModel",
         s     = max(x)
       )
 
-    }
+    },
+    predict = function(x = self$x) {
+    return(do.call(self$equation, append(list(x), self$estimated)))
+  }
   )
 )
