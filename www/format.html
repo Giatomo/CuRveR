@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {{ headContent() }}
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-4">
+                {{ uiOutput("columns") }}
+            </div>
+
+            <div class="col-sm-4">
+                {{ uiOutput("xdata") }}
+            </div>  
+
+            <div class="col-sm-4">
+                {{  uiOutput("ydata") }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-2">
+                {{ actionButton("format_data", "Format") }}
+            </div>
+        </div>
+    </div> 
+</body>
+</html>
+
+

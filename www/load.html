@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {{ headContent() }}
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                {{ shinyFiles::shinyFilesButton("files", label = "File select", title = "Please select a file", multiple = TRUE) }}
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-4">
+                {{ numericInput("n_signals", "Numbers of signal(s) to analyse:", value = 1, min = 1, max = 10, step = 1) }}
+            </div>  
+        </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                {{ uiOutput("signals") }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-2">
+                {{ actionButton("load_data", "Load data", style = "display:center-align") }}
+            </div>
+        </div>
+    </div> 
+</body>
+</html>
