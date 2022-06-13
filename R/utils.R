@@ -61,7 +61,7 @@ is_excel_file <- function(file) {
 
 
 #' @export
-fit_data <- function(.data, .groups, .value, .time, model = RichardModel, optimizer = DeOptimizer, loss_fun = least_absolute_deviation, min_bound_perc = 0.10, max_bound_perc = 0.10) {
+fit_data <- function(.data, .groups, .value, .time, model = RichardModel, optimizer = DeOptimizer, loss_fun = least_absolute_deviation, min_bound_perc = 0.10, max_bound_perc = 0.10, r_bound_tresh = 100) {
   optimizer <- optimizer$new(loss_fun)
 
   .data |>
