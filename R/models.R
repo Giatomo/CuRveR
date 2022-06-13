@@ -49,7 +49,7 @@ RichardModel <- R6::R6Class("RichardModel",
     parameter = c("p_max", "p_min", "r_max", "s"),
 
     # INIT
-    initialize = function(x, y, min_bound_perc = 0.10, max_bound_perc = 0.10) {
+    initialize = function(x, y, min_bound_perc = 0.10, max_bound_perc = 0.10, r_bound_tresh = 100) {
       if (is_tibble(x) && dim(x)[2] == 1) {
         x <- x[[1]]
       }
@@ -91,14 +91,14 @@ RichardModel <- R6::R6Class("RichardModel",
       self$lower <- list(
         p_max = self$start$p_max - difference * max_bound_perc,
         p_min = self$start$p_min - difference * min_bound_perc,
-        r_max = min(0, self$start$r_max * 100),
+        r_max = min(0, self$start$r_max * r_bound_tresh),
         s     = min(x)
       )
 
       self$upper <- list(
         p_max = self$start$p_max + difference * max_bound_perc,
         p_min = self$start$p_min + difference * min_bound_perc,
-        r_max = max(0, self$start$r_max * 100),
+        r_max = max(0, self$start$r_max * r_bound_tresh),
         s     = max(x)
       )
 
