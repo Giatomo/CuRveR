@@ -6,8 +6,6 @@ DeOptimizer <- R6::R6Class("DeOptimizer", list(
   },
   optimize = function(model) {
     fit_fun <- self$fitness_fun(model)
-    print(as.numeric(model$lower))
-    print(as.numeric(model$upper))
 
     fit <- GA::de(
       type = "real-valued",
