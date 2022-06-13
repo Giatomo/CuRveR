@@ -72,7 +72,7 @@ fit_data <- function(.data, .groups, .value, .time, model = RichardModel, optimi
       {{ .value }} := {{ .value }}
     ) |>
     rowwise() |>
-    mutate(model = list(model$new({{ .time  }}, {{ .value }}, min_bound_perc = min_bound_perc, max_bound_perc = max_bound_perc))) |>
+    mutate(model = list(model$new({{ .time  }}, {{ .value }}, min_bound_perc = min_bound_perc, max_bound_perc = max_bound_perc, r_bound_tresh = r_bound_tresh))) |>
     group_walk(\(x, y) {
       x$model[[1]]$optimize(optimizer)
     })
