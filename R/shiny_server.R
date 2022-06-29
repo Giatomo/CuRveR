@@ -46,7 +46,6 @@ shiny_server <- function(input, output, session) {
     paths <- files$datapath
 
     names(paths) <- files$name
-    print(paths)
     purrr::map(
       1:input$n_signals,
       \(x) {
@@ -81,8 +80,11 @@ shiny_server <- function(input, output, session) {
         read_tabular_file(
           filepath =    input[[paste0("file_", x)]],
           sheet =       input[[paste0("sheet_", x)]],
-          signal_name = input[[paste0("signal_", x)]])}
-    ) |> dplyr::bind_rows()
+          signal_name = input[[paste0("signal_", x)]]) |>
+        mutate(across(c(-signal), as.numeric)) -> df
+        print(df)
+        df}
+    ) |> dplyr::bind_rows() 
 
     rvs$columns <- colnames(rvs$data)[colnames(rvs$data) != "signal"]
 
@@ -99,7 +101,6 @@ shiny_server <- function(input, output, session) {
       right_cutoff = max(.data[[rvs$xdata]])
     ) -> rvs$cleaned
 
-    readr::write_csv(rvs$cleaned, "~/test_cleaned.csv")
 
     rvs$entities <- gtools::mixedsort(unique(rvs$cleaned[["well"]]))
     rvs$all_signals <- unique(rvs$cleaned[["signal"]])
@@ -188,11 +189,12 @@ shiny_server <- function(input, output, session) {
   overview <- reactive({
     req(rvs$cleaned, input$selected_signal_overview)
 
+
     rvs$cleaned |>
       filter(signal == input$selected_signal_overview) |>
       ggplot(aes(x = Time, y = value)) +
       geom_line() +
-      facet_grid(condition ~ .) +
+      facet_wrap(~well) +
       theme_minimal()
   })
 
@@ -464,8 +466,6 @@ shiny_server <- function(input, output, session) {
       filter(in_cutoff) |>
       fit_data(c(signal, condition), value, Time) -> rvs$parameters_by_condition
 
-    print(rvs$parameters)
-
     # All data table
 
     rvs$parameters_by_condition |>
@@ -473,14 +473,13 @@ shiny_server <- function(input, output, session) {
       unnest_wider(params) |>
       rowwise() |>
       mutate(fit = list(model$predict(Time)))  |>
-      select(-model) |>
       rowwise() |>
       mutate(
         Time = c(Time),
         value = c(value),
         fit = c(fit)
       ) |>
-      unnest(c(signal, condition, Time, value, fit)) -> rvs$data_by_condition
+      unnest(c(signal, condition,well, Time, value, fit)) -> rvs$data_by_condition
 
     output$data_by_condition <- formattable::renderFormattable({
       formattable::formattable(rvs$data_by_condition)
@@ -593,8 +592,10 @@ shiny_server <- function(input, output, session) {
       filter(signal == input$selected_signal_plot) |>
       filter(condition %in% input$selected_condition_plot) |>
       drop_na(condition) |>
-      group_by(condition, Time) |>
+      group_by(signal, condition, Time) |>
       summarise(sd = sd(value), mean = mean(value)) -> summarized_plot_data
+      
+
 
     if (input$plot_type == "metric_comparison") {
       plot_data |>
@@ -603,18 +604,21 @@ shiny_server <- function(input, output, session) {
         theme_minimal() +
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) -> p
     } else if (input$plot_type == "metric_visualization") {
-      print("metric_visualization")
+
 
       plot_data |>
-        mutate(intercept = richard(s, p_max, p_min, r_max, s) - r_max * s) |>
-        ggplot(aes(x = Time, y = value, group = well)) -> p
+        rowwise() |>
+        mutate(
+          yend = model$predict(s),
+          intercept = model$predict(s) - r_max * s) |>
+        ggplot(aes(x = Time, y = value, group = condition)) -> p
 
 
       for (metrics in input$metric_to_visualize) {
 
       }
       if ("data_point" %in% input$metric_to_visualize) {
-        p <- p + geom_point(aes(x = Time, y = value, group = well), alpha = .4, color = "#7570b3")
+        p <- p + geom_point(aes(x = Time, y = value, group = condition), alpha = .4, color = "#7570b3")
       }
 
       if ("p_max" %in% input$metric_to_visualize) {
@@ -628,7 +632,7 @@ shiny_server <- function(input, output, session) {
       if ("s" %in% input$metric_to_visualize) {
         p <- p + geom_segment(aes(
           x = s, xend = s,
-          y = 0, yend = richard(s, p_max, p_min, r_max, s)
+          y = 0, yend = yend
         ),
         linetype = "dashed",
         color = "#1B9E77"
@@ -636,7 +640,7 @@ shiny_server <- function(input, output, session) {
       }
 
       if ("r_max" %in% input$metric_to_visualize) {
-        p <- p + geom_line(aes(y = linear(Time, r_max, intercept)), linetype = "dashed", color = "#1B9E77")
+        p <- p + geom_line(aes(y = r_max * Time + intercept), linetype = "dashed", color = "#1B9E77")
       }
 
 
@@ -650,10 +654,10 @@ shiny_server <- function(input, output, session) {
         theme_minimal()
     } else if (input$plot_type == "data_comparison") {
       plot_data |>
-        ggplot(aes(x = Time, color = condition, fill = condition)) -> p
+        ggplot(aes(x = Time, color = signal, fill = signal)) -> p
 
       if ("data_points" %in% input$data_to_compare) {
-        p <- p + geom_point(aes(y = value, group = well), size = 2, alpha = .4)
+        p <- p + geom_point(aes(y = value, group = condition), size = 2, alpha = .4)
       }
 
       if ("sd_halo" %in% input$data_to_compare) {

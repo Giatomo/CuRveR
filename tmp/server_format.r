@@ -11,7 +11,6 @@ observeEvent(input$format_data, {
       right_cutoff = max(.data[[rvs$xdata]])
     ) -> rvs$cleaned
 
-    print(rvs$cleaned)
 
     rvs$entities <- gtools::mixedsort(unique(rvs$cleaned[["well"]]))
     rvs$all_signals <- unique(rvs$cleaned[["signal"]])

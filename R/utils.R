@@ -32,9 +32,10 @@ clean_time <- function(.data, .time_col) {
 
     .data |>
     mutate(
-      across(.cols = {{.time_col}}, .fns = \(x) lubridate::as_datetime(x), .names = "{.col}"),
+     # across(.cols = {{.time_col}}, .fns = \(x) lubridate::as_datetime(x), .names = "{.col}"),
       across(.cols = {{.time_col}}, .fns = \(x) x - first(x), .names = "{.col}"),
-      across(.cols = {{.time_col}}, .fns = \(x) as.numeric(x) / 3600, .names = "{.col}"))
+    # across(.cols = {{.time_col}}, .fns = \(x) as.numeric(x) / 3600, .names = "{.col}")
+      )
 }
 
 #' Format into long format
@@ -65,11 +66,12 @@ fit_data <- function(.data, .groups, .value, .time, model = RichardModel, optimi
   optimizer <- optimizer$new(loss_fun)
 
   .data |>
-    select({{ .groups }}, {{ .value }}, {{ .time }}) |>
+    select({{ .groups }}, {{ .value }}, {{ .time }}, well) |>
     group_by(across(c({{ .groups }}))) |>
     nest(
       {{ .time }} := {{ .time }},
-      {{ .value }} := {{ .value }}
+      {{ .value }} := {{ .value }},
+      well = well
     ) |>
     rowwise() |>
     mutate(model = list(model$new({{ .time  }}, {{ .value }}, min_bound_perc = min_bound_perc, max_bound_perc = max_bound_perc, r_bound_tresh = r_bound_tresh))) |>

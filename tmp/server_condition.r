@@ -4,7 +4,6 @@ server_condition <- function(input, output, session, rvs) {
   rvs$condition_manager <- conditionManagerServer("cond_manager", rvs$condition_manager$conditions, session = session)
 
   entitiesUI <- reactive({
-    print(session$ns)
     variables_rank_list(
       id = "data",
       group = "ConditionsSorter",
