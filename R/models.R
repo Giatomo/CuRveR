@@ -78,8 +78,8 @@ RichardModel <- R6::R6Class("RichardModel",
       
       print(order(self$y, decreasing=TRUE)[1:n_values_for_estimate])
       print(order(self$y, decreasing=FALSE)[1:n_values_for_estimate])
-      max_est = mean(order(self$y, decreasing=TRUE)[1:n_values_for_estimate])
-      min_est = mean(order(self$y, decreasing=FALSE)[1:n_values_for_estimate])
+      max_est <- mean(order(self$y, decreasing=TRUE)[1:n_values_for_estimate])
+      min_est <- mean(order(self$y, decreasing=FALSE)[1:n_values_for_estimate])
 
 
       # Estimate starting value for the optimizer
