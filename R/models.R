@@ -49,7 +49,7 @@ RichardModel <- R6::R6Class("RichardModel",
     parameter = c("p_max", "p_min", "r_max", "s"),
 
     # INIT
-    initialize = function(x, y, min_bound_perc = 0.10, max_bound_perc = 0.10, r_bound_tresh = 100) {
+    initialize = function(x, y, min_bound_perc = 0.10, max_bound_perc = 0.10, r_bound_tresh = 100, n_values_for_estimate = 1) {
       if (is_tibble(x) && dim(x)[2] == 1) {
         x <- x[[1]]
       }
@@ -75,12 +75,15 @@ RichardModel <- R6::R6Class("RichardModel",
 
       tibble(x = x, y = y) |> group_by(y) |> summarise(x = median(x)) -> data
       num_diff <- finite_diff_5pt_cent(data$x, data$y)
+      
+      max_est = mean(order(y, decreasing=TRUE)[1:n_values_for_estimate])
+      min_est = mean(order(y, decreasing=TRUE)[1:n_values_for_estimate])
 
 
       # Estimate starting value for the optimizer
       self$start <- list(
-        p_max = max(y),
-        p_min = min(y),
+        p_max = max_est,
+        p_min = min_est,
         r_max = num_diff[which.max(abs(num_diff))],
         s     = x[which.max(abs(finite_diff_5pt_cent(x, y)))]
       )
