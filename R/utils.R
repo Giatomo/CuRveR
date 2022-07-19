@@ -71,7 +71,7 @@ fit_data <- function(.data, .groups, .value, .time, .id = NULL,  model = Richard
     nest(
       {{ .time }} := {{ .time }},
       {{ .value }} := {{ .value }},
-      {{.id}} = {{.id}}
+      {{.id}} := {{.id}}
     ) |>
     rowwise() |>
     mutate(model = list(model$new({{ .time  }}, {{ .value }}, min_bound_perc = min_bound_perc, max_bound_perc = max_bound_perc, r_bound_tresh = r_bound_tresh, n_values_for_estimate = n_values_for_estimate))) |>
