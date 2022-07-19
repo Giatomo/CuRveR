@@ -76,10 +76,9 @@ RichardModel <- R6::R6Class("RichardModel",
       tibble(x = x, y = y) |> group_by(y) |> summarise(x = median(x)) -> data
       num_diff <- finite_diff_5pt_cent(data$x, data$y)
       
-      print(order(self$y, decreasing=TRUE)[1:n_values_for_estimate])
-      print(order(self$y, decreasing=FALSE)[1:n_values_for_estimate])
-      max_est <- mean(order(self$y, decreasing=TRUE)[1:n_values_for_estimate])
-      min_est <- mean(order(self$y, decreasing=FALSE)[1:n_values_for_estimate])
+
+      max_est <- mean(sort(self$y, decreasing=TRUE)[1:n_values_for_estimate])
+      min_est <- mean(sort(self$y, decreasing=FALSE)[1:n_values_for_estimate])
 
 
       # Estimate starting value for the optimizer
