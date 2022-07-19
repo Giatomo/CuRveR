@@ -77,7 +77,7 @@ RichardModel <- R6::R6Class("RichardModel",
       num_diff <- finite_diff_5pt_cent(data$x, data$y)
       
       max_est = mean(order(y, decreasing=TRUE)[1:n_values_for_estimate])
-      min_est = mean(order(y, decreasing=TRUE)[1:n_values_for_estimate])
+      min_est = mean(order(y, decreasing=FALSE)[1:n_values_for_estimate])
 
 
       # Estimate starting value for the optimizer
