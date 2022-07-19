@@ -62,7 +62,7 @@ is_excel_file <- function(file) {
 
 
 #' @export
-fit_data <- function(.data, .groups, .value, .time, model = RichardModel, optimizer = DeOptimizer, loss_fun = least_absolute_deviation, min_bound_perc = 0.10, max_bound_perc = 0.10, r_bound_tresh = 100) {
+fit_data <- function(.data, .groups, .value, .time, model = RichardModel, optimizer = DeOptimizer, loss_fun = least_absolute_deviation, min_bound_perc = 0.10, max_bound_perc = 0.10, r_bound_tresh = 100, n_values_for_estimate = 1) {
   optimizer <- optimizer$new(loss_fun)
 
   .data |>
@@ -74,7 +74,7 @@ fit_data <- function(.data, .groups, .value, .time, model = RichardModel, optimi
       well = well
     ) |>
     rowwise() |>
-    mutate(model = list(model$new({{ .time  }}, {{ .value }}, min_bound_perc = min_bound_perc, max_bound_perc = max_bound_perc, r_bound_tresh = r_bound_tresh))) |>
+    mutate(model = list(model$new({{ .time  }}, {{ .value }}, min_bound_perc = min_bound_perc, max_bound_perc = max_bound_perc, r_bound_tresh = r_bound_tresh, n_values_for_estimate = n_values_for_estimate))) |>
     group_walk(\(x, y) {
       x$model[[1]]$optimize(optimizer)
     })
